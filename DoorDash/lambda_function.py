@@ -9,7 +9,7 @@ textract = boto3.client('textract')
 
 def lambda_handler(event, context):
 
-    print ("entered function")
+    print ("entered function 1")
     # Step 1: Extract the message ID from SES event
     ses_record = event['Records'][0]['ses']
     message_id = ses_record['mail']['messageId']
