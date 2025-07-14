@@ -1,4 +1,4 @@
-import csv
+import boto3
 
 
 import csv
@@ -58,7 +58,7 @@ def parse_csv_to_name_category_dict(filename, result):
                 result[name] = category
     
 def add_category_column(input_file, name_to_category):
-    
+
     with open(afile, mode='r', newline='', encoding='utf-8') as infile, \
         open(afile+".out.csv", mode='w', newline='', encoding='utf-8') as outfile:
 
@@ -77,6 +77,20 @@ def add_category_column(input_file, name_to_category):
 # Example usage
 if __name__ == "__main__":
     name_category_dict = {}
+
+    s3 = boto3.client('s3')
+    bucket_name = 'monthly-transactions'
+
+    # Use paginator to handle large lists of objects
+    paginator = s3.get_paginator('list_objects_v2')
+    pages = paginator.paginate(Bucket=bucket_name)
+
+    for page in pages:
+        for obj in page.get('Contents', []):
+            print(obj['Key'])  # This is the filename (key)
+
+    sys.exit(0)
+
     filename = '/Users/peterlu/Downloads/202506-Transactions.csv'  # Replace with your actual file path
     parse_csv_to_name_category_dict(filename, name_category_dict)
 
