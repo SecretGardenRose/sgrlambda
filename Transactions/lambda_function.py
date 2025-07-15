@@ -1,11 +1,12 @@
 import boto3
 import json
 import io
+import re
 
 import csv
 from datetime import datetime
 
-month = '202506'
+month = '202504'
 bucket_name = 'monthly-transactions'
 
 # Mapping from file2's headers to file1's headers
@@ -39,12 +40,20 @@ def read_and_map(checkingFile, header_map, final_headers):
 
 # Sort by Post Date
 def parse_date(row):
-
     try:
         d = datetime.strptime(row['Post Date'], '%m/%d/%Y')  # Adjust format if needed
         return d
     except Exception:
         return datetime.min  # Fallback for invalid or missing dates
+
+def str_starts_with(d, pattern):
+    for k, v in d.items():
+        if pattern.startswith(k):
+            return v
+    
+    #if pattern == 'ORIG CO NAME:Secret Garden Ro       ORIG ID:4270465600 DESC DATE:       CO ENTRY DESCR:TRANSFER  SEC:CCD    TRACE#:111000029658910 EED:250602   IND ID:ST-L0J1W2N4J5P8              IND NAME:SECRET GARDEN ROSE INC TRN: 1539658910TC':
+    #    print("NOT FOUND")
+    return ''
 
 
 def parse_csv_to_name_category_dict(bucket_name, objectKey, result):
@@ -85,7 +94,6 @@ def add_category_column(input_file, name_to_category):
 def lambda_handler(event, context):
 
     name_category_dict = {}
-
 
     # Use paginator to handle large lists of objects
     paginator = s3.get_paginator('list_objects_v2')
@@ -132,9 +140,9 @@ def lambda_handler(event, context):
 
     for row in combined_sorted:
         name = row.get('Description')
-        row['Memo'] = name_category_dict.get(name, '')  # Default to empty string
+        row['Memo'] = str_starts_with(name_category_dict, name) # Default to empty string
 
-    key = f"{month}/{month}-Transactions"
+    key = f"{month}/{month}-transactions.csv"
 
     # Create an in-memory text buffer
     csv_buffer = io.StringIO()
@@ -155,7 +163,3 @@ def lambda_handler(event, context):
         'statusCode': 200,
         'body': json.dumps('Hello from Lambda!')
     }
-
-
-
-
