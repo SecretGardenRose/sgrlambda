@@ -18,6 +18,21 @@ column_mapping = {
     'Type': 'Type'
 }
 
+memo_mapping = {
+    'AMAZON MKTPL\*.*': 'Supply',
+    'Amazon.com\*.*': 'Supply',
+    'AMAZON PRIME\*.*': 'Supply',
+    'Online ACH.*Roadie.*': 'Transportation',
+    'Online ACH.*ShuangshuangYang2.*': 'Misc',
+    'Online ACH.*YueLu.*': 'Misc',
+    'Online ACH.*LiliYing.*': 'Professional',
+    'Online ACH.*WeiYang.*': 'Professional',
+    'Online ACH.*GuanLi.*': 'Professional',
+    'Online ACH.*RosaMelenciano.*': 'Professional',
+    'Online ACH.*120Management.*': 'Rent',
+    'Online ACH.*Ruifeng.*': 'Misc'
+}
+
 s3 = boto3.client('s3')
 
 def read_and_map(checkingFile, header_map, final_headers):
@@ -156,7 +171,6 @@ def lambda_handler(event, context):
         'body': json.dumps('Hello from Lambda!')
     }
 
-#add_category_column(inputfiles, name_category_dict)
 
 
 
