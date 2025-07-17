@@ -3,6 +3,8 @@ import boto3
 from email import policy
 from email.parser import BytesParser
 
+import io
+
 s3 = boto3.client('s3')
 textract = boto3.client('textract')
 
@@ -58,12 +60,55 @@ def lambda_handler(event, context):
                     print (part.get_content_disposition())
                     bytes_data = part.get_payload(decode=True)
 
-                    response = textract.analyze_document(
-                        Document={'Bytes': bytes_data},
-                        FeatureTypes=["TABLES"]
-                    )
+                    pdf_stream = io.BytesIO(bytes_data)
+                    reader = PyPDF2.PdfReader(pdf_strean)
 
-                    print_tables(response)
+                    # Loop through all pages and extract text
+                    for page_num, page in enumerate(reader.pages, start=1):
+                        text = page.extract_text()
+                        lines = text.splitlines()
+                        
+                        customer = None
+                        phone = None
+                        addr = None
+                        date = None
+                        item = None
+                        for i in range(len(lines)):
+                            if lines[i].startswith('Customer Order'):
+                                print(lines[i])
+                                
+                                customer = lines[i+1]
+                                phone = lines[i+2]
+                                addr = lines[i+3] + lines[i+4].split(', USA')[0]
+                                date = lines[i+4]
+                                
+                                print(customer) 
+                                print(phone) 
+                                print(addr)
+                                print(date)
+
+                            elif lines[i].startswith('Delivery Instructions:'):
+                                deliveryInstructions = lines[i]
+                                print(deliveryInstructions)
+                            elif lines[i].startswith('Qty.'):
+                                item = lines[i+1]
+                                for idx in range(2,100):
+                                    if lines[i+idx].startswith('~ End of Order'):
+                                        break
+                                    else:
+                                        item = item + lines[i+idx]
+                                print(item)
+                            else:
+                                print("unprocessed line", lines[i])
+                        break
+
+
+                    #response = textract.analyze_document(
+                    #    Document={'Bytes': bytes_data},
+                    #    FeatureTypes=["TABLES"]
+                    #)
+
+                    #print_tables(response)
 
 
 
