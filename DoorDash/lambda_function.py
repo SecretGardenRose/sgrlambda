@@ -4,6 +4,7 @@ from email import policy
 from email.parser import BytesParser
 
 import io
+import PyPDF2
 
 s3 = boto3.client('s3')
 textract = boto3.client('textract')
