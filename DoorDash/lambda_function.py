@@ -61,7 +61,7 @@ def lambda_handler(event, context):
                     bytes_data = part.get_payload(decode=True)
 
                     pdf_stream = io.BytesIO(bytes_data)
-                    reader = PyPDF2.PdfReader(pdf_strean)
+                    reader = PyPDF2.PdfReader(pdf_stream)
 
                     # Loop through all pages and extract text
                     for page_num, page in enumerate(reader.pages, start=1):
@@ -90,6 +90,7 @@ def lambda_handler(event, context):
                             elif lines[i].startswith('Delivery Instructions:'):
                                 deliveryInstructions = lines[i]
                                 print(deliveryInstructions)
+
                             elif lines[i].startswith('Qty.'):
                                 item = lines[i+1]
                                 for idx in range(2,100):
