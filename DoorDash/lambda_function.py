@@ -3,11 +3,14 @@ import boto3
 from email import policy
 from email.parser import BytesParser
 
+
 import io
 import PyPDF2
 
 s3 = boto3.client('s3')
 textract = boto3.client('textract')
+location = boto3.client("location")
+
 
 
 def lambda_handler(event, context):
@@ -83,6 +86,19 @@ def lambda_handler(event, context):
                                 addr = lines[i+3] + lines[i+4].split(', USA')[0]
                                 date = lines[i+4]
                                 
+                                # Search using your place index name
+                                response = location.search_place_index_for_text(
+                                    IndexName="MyLocationIndex",  # Use your actual index name
+                                    Text=addr,
+                                    MaxResults=1
+                                )
+
+                                if response['Results']:
+                                    place = response['Results'][0]['Place']
+                                    lat = place['Geometry']['Point'][1]
+                                    lon = place['Geometry']['Point'][0]
+                                    print(f"Latitude: {lat}, Longitude: {lon}")
+
                                 print(customer) 
                                 print(phone) 
                                 print(addr)
@@ -105,17 +121,6 @@ def lambda_handler(event, context):
                         break
 
 
-                    #response = textract.analyze_document(
-                    #    Document={'Bytes': bytes_data},
-                    #    FeatureTypes=["TABLES"]
-                    #)
-
-                    #print_tables(response)
-
-
-
-
-
     else:
         content_type = msg.get_content_type()
         if content_type == 'text/plain':
@@ -135,48 +140,3 @@ def lambda_handler(event, context):
         'body': 'Email successfully parsed.'
     }
 
-
-def get_text_from_relationships(block_map, relationships):
-    text = ''
-    if not relationships:
-        return text
-
-    for rel in relationships:
-        if rel['Type'] == 'CHILD':
-            for child_id in rel['Ids']:
-                word = block_map.get(child_id)
-                if word['BlockType'] == 'WORD':
-                    text += word['Text'] + ' '
-                elif word['BlockType'] == 'SELECTION_ELEMENT':
-                    if word['SelectionStatus'] == 'SELECTED':
-                        text += 'X '
-    return text.strip()
-
-def print_tables(response):
-    blocks = response['Blocks']
-    block_map = {block['Id']: block for block in blocks}
-
-    for block in blocks:
-        if block['BlockType'] == 'TABLE':
-            print("\n=== Table ===")
-            # Map cells by row and column
-            table = {}
-            for relationship in block.get('Relationships', []):
-                if relationship['Type'] == 'CHILD':
-                    for cell_id in relationship['Ids']:
-                        cell = block_map[cell_id]
-                        if cell['BlockType'] == 'CELL':
-                            row = cell['RowIndex']
-                            col = cell['ColumnIndex']
-                            content = get_text_from_relationships(block_map, cell.get('Relationships', []))
-                            table[(row, col)] = content
-
-            # Get max row/column size
-            max_row = max(k[0] for k in table.keys())
-            max_col = max(k[1] for k in table.keys())
-
-            for r in range(1, max_row + 1):
-                row_text = []
-                for c in range(1, max_col + 1):
-                    row_text.append(table.get((r, c), ''))
-                print('\t'.join(row_text))
