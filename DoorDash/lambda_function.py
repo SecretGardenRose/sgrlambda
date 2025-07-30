@@ -3,15 +3,15 @@ import boto3
 from email import policy
 from email.parser import BytesParser
 
-
+import urllib3
 import io
 import PyPDF2
+import re
+import json
 
 s3 = boto3.client('s3')
 textract = boto3.client('textract')
 location = boto3.client("location")
-
-
 
 def lambda_handler(event, context):
 
@@ -45,6 +45,16 @@ def lambda_handler(event, context):
     plain_body = None
     html_body = None
 
+
+    orderNumber = None
+    first_name = None
+    last_name = None
+    phone = None
+    addr = None
+    date = None
+    item = None
+    lat = None
+    lon = None
     if msg.is_multipart():
         for part in msg.walk():
             content_type = part.get_content_type()
@@ -72,16 +82,15 @@ def lambda_handler(event, context):
                         text = page.extract_text()
                         lines = text.splitlines()
                         
-                        customer = None
-                        phone = None
-                        addr = None
-                        date = None
-                        item = None
+ 
                         for i in range(len(lines)):
                             if lines[i].startswith('Customer Order'):
                                 print(lines[i])
                                 
-                                customer = lines[i+1]
+                                customer = lines[i+1].split()
+                                first_name = customer[0]
+                                last_name = customer[1]
+
                                 phone = lines[i+2]
                                 addr = lines[i+3] + lines[i+4].split(', USA')[0]
                                 date = lines[i+4]
@@ -100,6 +109,8 @@ def lambda_handler(event, context):
                                     print(f"Latitude: {lat}, Longitude: {lon}")
 
                                 print(customer) 
+                                print(first_name)
+                                print(last_name)
                                 print(phone) 
                                 print(addr)
                                 print(date)
@@ -116,11 +127,71 @@ def lambda_handler(event, context):
                                     else:
                                         item = item + lines[i+idx]
                                 print(item)
+                            
+                            elif 'Order Number' in lines[i]:
+                                orderNumber = lines[i].split()[-1].strip()
+                                print(orderNumber)
+
                             else:
                                 print("unprocessed line", lines[i])
                         break
+                    
+ 
+        http = urllib3.PoolManager()
+        
+        # API URL
+        api_url = "https://www.hellosecretgarden.com/south-fast/mall/mallorder/save"
+        
+        data = {
+            "orderNumber": orderNumber,
+            "flowerPicture": "http://example.com/flower.jpg",
+            "userEmail": "user@example.com",
+            "externalId": orderNumber,
+            "userPhone": phone,
+            "orderStatus": "pending",
+            "firstName": first_name,
+            "lastName": last_name,
+            "userZip": "10001",
+            "note": deliveryInstructions,
+            "city": "New York",
+            "address": addr,
+            "tags": "gift",
+            "sgrCal": "some_value",
+            "sgrCalValue": "some_value",
+            "sgrInst": "some_instruction",
+            "sgrInstValue": "some_instruction_value",
+            "productName": "Rose Bouquet",
+            "fulfillmentStatus": "unfulfilled",
+            "delivery": "standard",
+            "florist": "Local Florist",
+            "billingPhone": "1234567890",
+            "recipientPhone": "0987654321",
+            "address2": "Apt 4B",
+            "shopifyId": "SHOP123",
+            "latitude": lat,
+            "longitude": lon
+        }
+        
+        # 发送请求
+        response = http.request(
+            'POST',
+            api_url,
+            body=json.dumps(data),
+            headers={'Content-Type': 'application/json'}
+        )
 
+        print(f"响应结果: {response}")
+        
+        # 处理响应
+        result = json.loads(response.data.decode('utf-8'))
 
+        print(f"响应结果2: {result}")
+        
+        if response.status == 200 and result.get("code") == 0:
+            return {"status": "success", "message": "操作成功"}
+        else:
+            return {"status": "error", "message": result}
+            
     else:
         content_type = msg.get_content_type()
         if content_type == 'text/plain':
@@ -138,5 +209,6 @@ def lambda_handler(event, context):
     return {
         'statusCode': 200,
         'body': 'Email successfully parsed.'
-    }
+    }        
+
 
