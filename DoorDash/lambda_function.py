@@ -8,6 +8,7 @@ import io
 import PyPDF2
 import re
 import json
+from datetime import datetime
 
 s3 = boto3.client('s3')
 textract = boto3.client('textract')
@@ -55,6 +56,8 @@ def lambda_handler(event, context):
     item = None
     lat = None
     lon = None
+    tag = None
+    item = None
     if msg.is_multipart():
         for part in msg.walk():
             content_type = part.get_content_type()
@@ -86,6 +89,8 @@ def lambda_handler(event, context):
                         for i in range(len(lines)):
                             if lines[i].startswith('Customer Order'):
                                 print(lines[i])
+                                print(lines[i+1])
+                                print(lines[i+2])
                                 
                                 customer = lines[i+1].split()
                                 first_name = customer[0]
@@ -93,7 +98,10 @@ def lambda_handler(event, context):
 
                                 phone = lines[i+2]
                                 addr = lines[i+3] + lines[i+4].split(', USA')[0]
-                                date = lines[i+4]
+                                date = lines[i+5]
+                                date_obj = datetime.strptime(date, "%b %d, %Y")
+                                tag = f"{date_obj.month}/{date_obj.day}"
+                                
                                 
                                 # Search using your place index name
                                 response = location.search_place_index_for_text(
@@ -114,13 +122,14 @@ def lambda_handler(event, context):
                                 print(phone) 
                                 print(addr)
                                 print(date)
+                                print(tag)
 
                             elif lines[i].startswith('Delivery Instructions:'):
                                 deliveryInstructions = lines[i]
                                 print(deliveryInstructions)
 
                             elif lines[i].startswith('Qty.'):
-                                item = lines[i+1]
+                                item = lines[i+1].split('$')[0]
                                 for idx in range(2,100):
                                     if lines[i+idx].startswith('~ End of Order'):
                                         break
@@ -155,12 +164,12 @@ def lambda_handler(event, context):
             "note": deliveryInstructions,
             "city": "New York",
             "address": addr,
-            "tags": "gift",
+            "tags": tag,
             "sgrCal": "some_value",
             "sgrCalValue": "some_value",
             "sgrInst": "some_instruction",
             "sgrInstValue": "some_instruction_value",
-            "productName": "Rose Bouquet",
+            "productName": item,
             "fulfillmentStatus": "unfulfilled",
             "delivery": "standard",
             "florist": "Local Florist",
