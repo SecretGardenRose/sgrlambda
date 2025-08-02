@@ -23,6 +23,7 @@ def lambda_handler(event, context):
     
     #message_id = 'qtg8divbtknfuu2dtrvv6g8fukabvps2v4qqf681'
     #message_id = 'eblinuob0u6iqojngvbvf1lfcm22utbtq1ifdi01' #Amanda O
+    #message_id = 'locn4i5h1h7o0c1kc6g6d38f470691oegtou7n81' #Sophia G
 
     # Step 2: Build the S3 object path
     bucket_name = 'ses-sgrcredit'
@@ -92,15 +93,25 @@ def lambda_handler(event, context):
                                 print(lines[i+1])
                                 print(lines[i+2])
                                 
+                                
                                 customer = lines[i+1].split()
                                 first_name = customer[0]
                                 last_name = customer[1]
 
                                 phone = lines[i+2]
-                                addr = lines[i+3] + lines[i+4].split(', USA')[0]
-                                date = lines[i+5]
-                                date_obj = datetime.strptime(date, "%b %d, %Y")
-                                tag = f"{date_obj.month}/{date_obj.day}"
+                                addr = lines[i+3]
+                                for j in range(4, 9):
+                                    if ', USA' in lines[i+j]:
+                                        addr = addr + lines[i+j].split(', USA')[0]
+                                        date = lines[i+j+1]
+                                        date_obj = datetime.strptime(date, "%b %d, %Y")
+                                        tag = f"{date_obj.month}/{date_obj.day}"
+                                        break
+                                    addr = addr + lines[i+j] 
+                                print ("addr:", addr)
+                                print ("tag", tag)
+                                
+                                
                                 
                                 
                                 # Search using your place index name
