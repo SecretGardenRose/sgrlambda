@@ -85,18 +85,16 @@ def lambda_handler(event, context):
                     for page_num, page in enumerate(reader.pages, start=1):
                         text = page.extract_text()
                         lines = text.splitlines()
-                        
  
                         for i in range(len(lines)):
                             if lines[i].startswith('Customer Order'):
                                 print(lines[i])
                                 print(lines[i+1])
                                 print(lines[i+2])
-                                
-                                
+                                                             
                                 customer = lines[i+1].split()
                                 first_name = customer[0]
-                                last_name = customer[1]
+                                last_name = customer[1] if len(customer) == 2 else None
 
                                 phone = lines[i+2]
                                 addr = lines[i+3]
@@ -110,9 +108,6 @@ def lambda_handler(event, context):
                                     addr = addr + lines[i+j] 
                                 print ("addr:", addr)
                                 print ("tag", tag)
-                                
-                                
-                                
                                 
                                 # Search using your place index name
                                 response = location.search_place_index_for_text(
@@ -141,12 +136,14 @@ def lambda_handler(event, context):
 
                             elif lines[i].startswith('Qty.'):
                                 item = lines[i+1].split('$')[0]
+                                print("beginning item", item)
                                 for idx in range(2,100):
                                     if lines[i+idx].startswith('~ End of Order'):
                                         break
                                     else:
-                                        item = item + lines[i+idx]
-                                print(item)
+                                        item = item + lines[i+idx].split('$')[0]
+                                        print ("adding item:", item)
+                                print("final items:", item)
                             
                             elif 'Order Number' in lines[i]:
                                 orderNumber = lines[i].split()[-1].strip()
@@ -163,10 +160,10 @@ def lambda_handler(event, context):
         api_url = "https://www.hellosecretgarden.com/south-fast/mall/mallorder/save"
         
         data = {
-            "orderNumber": orderNumber,
+            "orderNumber": orderNumber+"testing1",
             "flowerPicture": "http://example.com/flower.jpg",
             "userEmail": "user@example.com",
-            "externalId": orderNumber,
+            "externalId": orderNumber+"testing1",
             "userPhone": phone,
             "orderStatus": "pending",
             "firstName": first_name,
