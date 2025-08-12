@@ -34,7 +34,6 @@ def lambda_handler(event, context):
     s3_object = s3.get_object(Bucket=bucket_name, Key=object_key)
     raw_email = s3_object['Body'].read()
 
-    print ("hello")
     # Step 4: Parse raw email using the built-in email parser
     msg = BytesParser(policy=policy.default).parsebytes(raw_email)
 
@@ -46,7 +45,6 @@ def lambda_handler(event, context):
     # Extract email body (plain text and HTML if present)
     plain_body = None
     html_body = None
-
 
     orderNumber = None
     first_name = None
@@ -160,10 +158,10 @@ def lambda_handler(event, context):
         api_url = "https://www.hellosecretgarden.com/south-fast/mall/mallorder/save"
         
         data = {
-            "orderNumber": orderNumber+"testing1",
+            "orderNumber": orderNumber,
             "flowerPicture": "http://example.com/flower.jpg",
             "userEmail": "user@example.com",
-            "externalId": orderNumber+"testing1",
+            "externalId": orderNumber,
             "userPhone": phone,
             "orderStatus": "pending",
             "firstName": first_name,
