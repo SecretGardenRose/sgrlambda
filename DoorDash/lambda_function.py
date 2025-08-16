@@ -194,11 +194,11 @@ def lambda_handler(event, context):
         # Request (Post)
         response = http.request(
             'POST',
-            prod_api_url, // dev_api_url
+            prod_api_url, # dev_api_url
             body=json.dumps(data),
             headers={'Content-Type': 'application/json'}
         )
-        print(f"Response": {response}")
+        print(f"Response: {response}")
         
         result = json.loads(response.data.decode('utf-8'))
         print(f"Response2: {result}")
