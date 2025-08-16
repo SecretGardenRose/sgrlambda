@@ -16,7 +16,6 @@ location = boto3.client("location")
 
 def lambda_handler(event, context):
 
-    print ("entered function 1")
     # Step 1: Extract the message ID from SES event
     ses_record = event['Records'][0]['ses']
     message_id = ses_record['mail']['messageId']
@@ -153,10 +152,7 @@ def lambda_handler(event, context):
                     
  
         http = urllib3.PoolManager()
-        
-        # API URL
-        api_url = "https://www.hellosecretgarden.com/south-fast/mall/mallorder/save"
-        
+ 
         data = {
             "orderNumber": orderNumber,
             "flowerPicture": "http://example.com/flower.jpg",
@@ -187,23 +183,28 @@ def lambda_handler(event, context):
             "longitude": lon
         }
         
-        # 发送请求
+
+        
+        # DEV API URL
+        dev_api_url = "https://www.hellosecretgarden.com/south-fast/mall/mallorder/save"
+       
+        # PROD API URL
+        prod_api_url = "https://www.southiu.cn/south-fast/mall/mallorder/save"
+
+        # Request (Post)
         response = http.request(
             'POST',
-            api_url,
+            prod_api_url, // dev_api_url
             body=json.dumps(data),
             headers={'Content-Type': 'application/json'}
         )
-
-        print(f"响应结果: {response}")
+        print(f"Response": {response}")
         
-        # 处理响应
         result = json.loads(response.data.decode('utf-8'))
-
-        print(f"响应结果2: {result}")
+        print(f"Response2: {result}")
         
         if response.status == 200 and result.get("code") == 0:
-            return {"status": "success", "message": "操作成功"}
+            return {"status": "success", "message": "Successfully add DoorDash order!"}
         else:
             return {"status": "error", "message": result}
             
