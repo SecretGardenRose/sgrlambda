@@ -183,8 +183,6 @@ def lambda_handler(event, context):
             "longitude": lon
         }
         
-
-        
         # DEV API URL
         dev_api_url = "https://www.hellosecretgarden.com/south-fast/mall/mallorder/save"
        

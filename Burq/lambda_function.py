@@ -329,10 +329,9 @@ class DeliveryService:
 def lambda_handler(event, context):
     print(f"event:{str(event)}")
     
-    print(f"queryStringParameters:{str(event.get("queryStringParameters"))}")
-    print(f"queryStringParameters:{str(event.get("queryStringParameters").get("orderId"))}")
-    orderId = event.get("orderId") if  event.get("orderId") else event.get("queryStringParameters").get("orderId")
-    address = event.get("address") if  event.get("address") else event.get("queryStringParameters").get("address")
+    body = json.loads(event.get("body"))
+    orderId = body.get("orderId")
+    address = body.get("address")
     print(f"orderId:{str(orderId)}")
     print(f"address:{str(address)}")
 

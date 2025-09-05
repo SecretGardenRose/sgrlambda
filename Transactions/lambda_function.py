@@ -6,7 +6,7 @@ import re
 import csv
 from datetime import datetime
 
-month = '202504'
+month = '202508'
 bucket_name = 'monthly-transactions'
 
 # Mapping from file2's headers to file1's headers
